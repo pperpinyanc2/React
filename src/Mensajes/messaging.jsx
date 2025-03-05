@@ -32,9 +32,20 @@ function Messaging() {
         return selectedUser ? selectedUser.email : null;
       }).filter(email => email !== null);
 
-      await sendMessage(recipientEmails, message, sender);
+      let imageUrl = null;
+      if (file) {
+        try {
+          imageUrl = await uploadImageToServer(file, currentUser.uid); 
+        } catch (error) {
+          console.error("Error uploading image", error);
+        }
+      }
+
+      
+      await sendMessage(recipientEmails, message, sender, imageUrl); 
       setMessage(""); 
       setReplyToMessage(null);  
+      setFile(null); 
       setMessages(await getMessages()); 
     }
   };
@@ -86,20 +97,7 @@ function Messaging() {
   };
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]); // Set the selected file
-  };
-
-  const handleImageUpload = async () => {
-    if (file && currentUser) {
-      try {
-        const imageUrl = await uploadImageToServer(file, currentUser.uid); // Assuming you have a function to upload the image to your server
-        setMessage(message + ` [Image: ${imageUrl}]`); // Optional: append image URL to the message
-      } catch (error) {
-        console.error("Error uploading image", error);
-      }
-    } else {
-      alert("Por favor selecciona una imagen antes de intentar subirla.");
-    }
+    setFile(e.target.files[0]); 
   };
 
   return (
@@ -112,13 +110,12 @@ function Messaging() {
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Tu mensaje aqui"
+            placeholder="Tu mensaje aquí"
           />
           
-          {/* Image upload section */}
+          {/* Sección de carga de imagen */}
           <input type="file" onChange={handleFileChange} />
-          <button onClick={handleImageUpload}>Subir imagen</button>
-
+          
           <div>
             {users.map((user) => (
               <label key={user.id}>
@@ -137,6 +134,7 @@ function Messaging() {
               </label>
             ))}
           </div>
+          
           <button onClick={handleSend}>Enviar</button>
 
           <h2>Recibidos</h2>
@@ -146,6 +144,7 @@ function Messaging() {
               .map((msg, index) => (
                 <li key={index} style={{ color: replyToMessage && replyToMessage.id === msg.id ? "black" : "red" }}>
                   {msg.text} (de {msg.sender})
+                  {msg.imageUrl && <img src={msg.imageUrl} alt="Imagen" width="100" />}
                   <button onClick={() => handleReply(msg)}>Responder</button>
                   <button onClick={() => handleDeleteMessage(msg.id)} style={{ marginLeft: "10px" }}>Eliminar</button>
                 </li>

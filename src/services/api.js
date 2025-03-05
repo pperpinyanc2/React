@@ -4,7 +4,6 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { collection, getDocs, addDoc, updateDoc, getDoc, deleteDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage"; 
 
-
 export const signUp = async (email, password) => {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -100,7 +99,8 @@ export const deleteItem = async (id) => {
         return { error: err.message };
     }
 };
-//WHATSAPP2
+
+// WHATSAPP2
 
 export const getUsers = async () => {
     try {
@@ -114,53 +114,54 @@ export const getUsers = async () => {
 };
 
 export const sendMessage = async (recipients, text, sender) => {
-try {
-    const messagesCollection = collection(db, "messages");
-    await addDoc(messagesCollection, {
-    recipients, //ESTE ES A QUIEN SE LO ENVIAS
-    text,
-    sender,    
-    });
-} catch (err) {
-    console.error("Error al enviar el mensaje:", err);
-    return { error: err.message };
-}
+    try {
+        const messagesCollection = collection(db, "messages");
+        await addDoc(messagesCollection, {
+            recipients, // ESTOS SON LOS DESTINATARIOS
+            text,
+            sender,    
+        });
+    } catch (err) {
+        console.error("Error al enviar el mensaje:", err);
+        return { error: err.message };
+    }
 };
-
 
 export const getMessages = async () => {
-try {
-    const messagesCollection = collection(db, "messages");
-    const snapshot = await getDocs(messagesCollection);
-    return snapshot.docs.map(doc => ({
-    id: doc.id,  
-    ...doc.data() 
-    }));
-} catch (err) {
-    console.error("Error al obtener los mensajes:", err);
-    return { error: err.message };
-}
+    try {
+        const messagesCollection = collection(db, "messages");
+        const snapshot = await getDocs(messagesCollection);
+        return snapshot.docs.map(doc => ({
+            id: doc.id,  
+            ...doc.data() 
+        }));
+    } catch (err) {
+        console.error("Error al obtener los mensajes:", err);
+        return { error: err.message };
+    }
 };
-
 
 export const deleteMessage = async (id) => {
-try {
-    const messageRef = doc(db, "messages", id);
-    await deleteDoc(messageRef);
-    console.log("Mensaje eliminado correctamente");
-    return { id };
-} catch (err) {
-    console.error("Error al eliminar el mensaje:", err);
-    return { error: err.message };
-}
+    try {
+        const messageRef = doc(db, "messages", id);
+        await deleteDoc(messageRef);
+        console.log("Mensaje eliminado correctamente");
+        return { id };
+    } catch (err) {
+        console.error("Error al eliminar el mensaje:", err);
+        return { error: err.message };
+    }
 };
 
-export const uploadImage = async (file, uid) => {
-  const storageRef = ref(getStorage, `/files/${uid}/${file.name}`);
+export const uploadImageToServer = async (file, uid) => {
+  const storageRef = ref(getStorage(), `/files/${uid}/${file.name}`);
   const uploadTask = uploadBytes(storageRef, file);
+  
   uploadTask.then(async (data) => {
     const url = await getDownloadURL(data.ref);
     const colRef = collection(db, "users");
     await setDoc(doc(colRef, uid), { uploadedPicture: url });
+  }).catch((err) => {
+    console.error("Error al subir la imagen:", err);
   });
 };
